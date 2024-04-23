@@ -1,15 +1,20 @@
-import { useEffect } from "react";
-import { SplashScreen, Slot } from "expo-router";
 import { useFonts } from "expo-font";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SplashScreen, Slot } from "expo-router";
 import {
   setStatusBarBackgroundColor,
   setStatusBarStyle,
   setStatusBarTranslucent,
 } from "expo-status-bar";
-import { BethanyProvider } from "./bethanyContext.js";
-import Header from "./Header";
+import { useEffect } from "react";
+import {
+  PaperProvider,
+  ActivityIndicator,
+  MD2Colors,
+} from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import Footer from "./Footer";
+import { ContextProvider } from "./appContext.js";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,13 +41,15 @@ const Layout = () => {
   }
 
   return (
-    <BethanyProvider>
-      <SafeAreaView>
-        {/* <Header /> */}
-        <Slot />
-        <Footer />
-      </SafeAreaView>
-    </BethanyProvider>
+    <ContextProvider>
+      <PaperProvider>
+        <SafeAreaView>
+          {/* <Header /> */}
+          <Slot />
+          <Footer />
+        </SafeAreaView>
+      </PaperProvider>
+    </ContextProvider>
   );
 };
 

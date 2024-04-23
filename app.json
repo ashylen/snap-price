@@ -10,20 +10,21 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#d77948"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ashylen.snapprice"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.ashylen.bethanysv2"
+      "package": "com.ashylen.snapprice"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -39,8 +40,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "01b02e79-06e4-4554-8559-03b9f6b0cde0"
+        "projectId": "c6d994ef-c580-4cb1-b977-aec405d09c53"
       }
-    }
+    },
+    "owner": "ashylen"
   }
 }

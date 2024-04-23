@@ -1,3 +1,5 @@
+import * as ImagePicker from "expo-image-picker";
+import { useContext, useState } from "react";
 import {
   View,
   Text,
@@ -8,20 +10,31 @@ import {
 } from "react-native";
 import MlkitOcr from "react-native-mlkit-ocr";
 
-import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { AppContext } from "./appContext";
+
+const DATA = [
+  {
+    title: "First Item",
+  },
+  {
+    title: "Second Item",
+  },
+];
 
 const Home = () => {
   // The path of the picked image
   const [pickedImagePath, setPickedImagePath] = useState("");
   const [uriValue, setUriValue] = useState(null);
   const [resultsFromOcr, setResultsFromOcr] = useState(null);
+  const { images, setImages } = useContext(AppContext);
 
+  console.log(images);
   const processResultImg = async (imgUri) => {
     setPickedImagePath(imgUri);
     setUriValue(imgUri);
     await mlOCR(imgUri);
   };
+
   // This function is triggered when the "Select an image" button pressed
   const showImagePicker = async () => {
     // Ask the user for the permission to access the media library
@@ -75,6 +88,10 @@ const Home = () => {
       console.log(resultsOcr);
 
       setResultsFromOcr(resultsOcr);
+      setImages((prevState) => [
+        ...prevState,
+        { path: imageUri, decodedText: resultsOcr },
+      ]);
     } catch (err) {
       console.error(err);
     }
@@ -111,17 +128,20 @@ const Home = () => {
         </TouchableOpacity>
       </View>
 
-      {resultsFromOcr &&
-        resultsFromOcr.map((textGroup) => (
-          <Text key={textGroup.text.replace(" ", "")}>{textGroup.text}</Text>
-        ))}
-      {/* <TouchableOpacity style={{ marginTop: 15, backgroundColor: "#77dd77", padding: 20, }} onPress={mlOCR}><Text style={{ color: 'black', fontSize: 20, textAlign: 'center' }}>Rozpoznaj tekst</Text></TouchableOpacity> */}
+      {uriValue && (
+        <Image
+          source={{ uri: uriValue }}
+          contentFit="contain"
+          transition={1000}
+          style={{ width: 200, height: 200, objectFit: "contain" }}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {},
+  container: { height: "100%" },
   imageContainer: {},
   buttonContainer: {},
   button: { padding: 20, backgroundColor: "#00a2ed", margin: 10 },
