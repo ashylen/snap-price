@@ -1,0 +1,62 @@
+import { useRouter } from "expo-router";
+import { useContext } from "react";
+import { StyleSheet, View, Dimensions, Platform } from "react-native";
+import { IconButton, MD3Colors } from "react-native-paper";
+
+import { AppContext } from "./appContext";
+
+const windowDimensions = Dimensions.get("window");
+const WinHeight = windowDimensions.height;
+
+const Footer = () => {
+  const router = useRouter();
+
+  return (
+    <View style={styles.footer}>
+      <IconButton
+        icon="home"
+        iconColor={MD3Colors.neutral90}
+        size={28}
+        onPress={() => {
+          router.replace("/");
+        }}
+      />
+
+      <IconButton
+        icon="cart-check"
+        iconColor={MD3Colors.neutral90}
+        size={28}
+        onPress={() => {
+          router.replace("/receipt");
+        }}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  footer: {
+    alignItems: "center",
+    justifyContent: "space-around",
+    backgroundColor: "#8290b5",
+    height: 70,
+    width: "100%",
+    flexDirection: "row",
+    ...Platform.select({
+      android: {
+        position: "absolute",
+        top: WinHeight - 70
+      },
+      ios: {
+        position: "absolute",
+        top: WinHeight - 70
+      },
+      default: {
+        position: "relative",
+        bottom: 0
+      }
+    })
+  }
+});
+
+export default Footer;
