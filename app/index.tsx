@@ -1,10 +1,12 @@
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
-import { Image, TouchableOpacity, View } from "react-native";
+import { Image, TouchableOpacity } from "react-native";
 import MlkitOcr, { MlkitOcrResult } from "react-native-mlkit-ocr";
 import { DataTable, FAB, IconButton, MD3Colors, Modal, Portal, Text } from "react-native-paper";
 
 import { AppContext } from "./appContext";
+import Summary from "./components/Summary";
+import { normalizePrice } from "./helpers";
 
 const Home = () => {
   const [state, setState] = React.useState({ open: false });
@@ -43,7 +45,7 @@ const Home = () => {
         convertedText = {
           fullText: decodedText.map((item) => item.text).join("|||"),
           itemName: decodedText[0].text,
-          price: parseFloat(item.text.replaceAll(/[^0-9,.]/g, "").replaceAll(",", "."))
+          price: normalizePrice(item.text)
         };
       }
     });
@@ -123,22 +125,7 @@ const Home = () => {
           )}
         </Modal>
       </Portal>
-      <View
-        style={{
-          backgroundColor: "#4169E1",
-          height: 50,
-          alignContent: "center",
-          justifyContent: "center"
-        }}>
-        <Text
-          style={{
-            textAlign: "center"
-          }}>
-          Suma:{" "}
-          {productImages.map((item) => item.decodedText.price).reduce((acc, cost) => acc + cost, 0)}{" "}
-          zł
-        </Text>
-      </View>
+      <Summary />
       <DataTable style={{ backgroundColor: "#000000" }}>
         <DataTable.Header>
           <DataTable.Title>Nazwa</DataTable.Title>

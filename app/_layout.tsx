@@ -57,12 +57,11 @@ const Layout = () => {
   return (
     <ContextProvider>
       <PaperProvider>
-        <SafeAreaView style={styles.preseveFooter}>
+        <SafeAreaView>
           <Appbar.Header>
             {/* <Appbar.BackAction onPress={() => {}} /> */}
             <Appbar.Content title={pathname === "/" ? "Lista zakupów" : "Paragon"} />
           </Appbar.Header>
-          {/* <Header /> */}
           <Slot />
           <Footer />
         </SafeAreaView>
@@ -78,9 +77,6 @@ const styles = StyleSheet.create({
     display: "flex",
     justifyContent: "center",
     alignItems: "center"
-  },
-  preseveFooter: {
-    marginBottom: 70
   }
 });
 

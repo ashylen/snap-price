@@ -1,10 +1,12 @@
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
 import { ScrollView } from "react-native";
-import MlkitOcr, { MlkitOcrResult } from "react-native-mlkit-ocr";
+import MlkitOcr from "react-native-mlkit-ocr";
 import { DataTable, FAB, Portal, Text } from "react-native-paper";
 
 import { AppContext } from "./appContext";
+import Summary from "./components/Summary";
+import { getProductsFromReceipt, normalizePrice } from "./helpers";
 
 const Receipt = () => {
   const { receiptImage, setReceiptImage } = React.useContext(AppContext);
@@ -57,61 +59,31 @@ const Receipt = () => {
     try {
       const resultsOcr = await MlkitOcr.detectFromUri(imageUri);
 
+      console.log(
+        "xddd-------------------------",
+        resultsOcr.map((item) => item.text)
+      );
       setReceiptImage({ path: imageUri, decodedText: resultsOcr });
     } catch (err) {
       console.error(err);
     }
   };
 
-  const extractItemsFromDecodedText = (decodedText: MlkitOcrResult) => {
-    const receiptRegexPieces = /^(.+)([0-9]+\sszt[^0-9]?)([0-9.|,]+)$/gm;
-
-    const convertedText: {
-      fullString: string;
-      itemName: string;
-      quantity: string;
-      price: string;
-    }[] = [];
-
-    decodedText.forEach((item) => {
-      const matches = item.text.matchAll(receiptRegexPieces);
-
-      console.log(matches);
-      for (const matchedGroup of matches) {
-        const [
-          fullString, //[0] -> matched string "1 Blue gatorade $2.00"
-          itemName, //[1] -> quantity "1"
-          quantity, //[2] -> item description "Blue gatorade"
-          price //[3] -> "$" (should probably always ignore)
-        ] = matchedGroup;
-
-        convertedText.push({
-          fullString,
-          itemName,
-          quantity: quantity.replaceAll(/[^0-9]/g, ""),
-          price
-        });
-      }
-    });
-
-    console.log("HERE------------------------", convertedText);
-
-    return convertedText;
-  };
-
   return (
     <>
+      <Summary />
       <DataTable style={{ backgroundColor: "#000000" }}>
         <DataTable.Header>
           <DataTable.Title>#</DataTable.Title>
           <DataTable.Title>Nazwa</DataTable.Title>
           <DataTable.Title>Ilość</DataTable.Title>
           <DataTable.Title>Cena</DataTable.Title>
+          <DataTable.Title>Wartość</DataTable.Title>
         </DataTable.Header>
 
         <ScrollView>
           {receiptImage?.decodedText &&
-            extractItemsFromDecodedText(receiptImage.decodedText).map((product, index) => (
+            getProductsFromReceipt(receiptImage.decodedText).pieces.map((product, index) => (
               <DataTable.Row key={product.itemName + index}>
                 <DataTable.Cell>{index}</DataTable.Cell>
 
@@ -119,10 +91,33 @@ const Receipt = () => {
                   <Text>{product.itemName}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell>
-                  <Text>{product.quantity}</Text>
+                  <Text>{product.quantity} szt</Text>
                 </DataTable.Cell>
                 <DataTable.Cell>
                   <Text>{product.price}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  <Text>{product.price * normalizePrice(product.quantity)}</Text>
+                </DataTable.Cell>
+              </DataTable.Row>
+            ))}
+
+          {receiptImage?.decodedText &&
+            getProductsFromReceipt(receiptImage.decodedText).weights.map((product, index) => (
+              <DataTable.Row key={product.itemName + index}>
+                <DataTable.Cell>{index}</DataTable.Cell>
+
+                <DataTable.Cell>
+                  <Text>{product.itemName}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  <Text>{product.quantity} kg</Text>
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  <Text>{product.price}</Text>
+                </DataTable.Cell>
+                <DataTable.Cell>
+                  <Text>{(product.price * normalizePrice(product.quantity)).toFixed(2)}</Text>
                 </DataTable.Cell>
               </DataTable.Row>
             ))}
