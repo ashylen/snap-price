@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { SplashScreen, Slot, router, useRootNavigationState, usePathname } from "expo-router";
+import { SplashScreen, Slot, usePathname } from "expo-router";
 import {
   setStatusBarBackgroundColor,
   setStatusBarStyle,

@@ -1,9 +1,6 @@
 import { useRouter } from "expo-router";
-import { useContext } from "react";
 import { StyleSheet, View, Dimensions, Platform } from "react-native";
 import { IconButton, MD3Colors } from "react-native-paper";
-
-import { AppContext } from "./appContext";
 
 const windowDimensions = Dimensions.get("window");
 const WinHeight = windowDimensions.height;

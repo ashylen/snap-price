@@ -1,23 +1,17 @@
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
-import { Image, TouchableOpacity } from "react-native";
+import { Image, TouchableOpacity, View } from "react-native";
 import MlkitOcr, { MlkitOcrResult } from "react-native-mlkit-ocr";
 import { DataTable, FAB, IconButton, MD3Colors, Modal, Portal, Text } from "react-native-paper";
 
 import { AppContext } from "./appContext";
 
 const Home = () => {
-  const [page, setPage] = React.useState(0);
-  const [numberOfItemsPerPageList] = React.useState([2, 3, 4]);
-  const [itemsPerPage, onItemsPerPageChange] = React.useState(numberOfItemsPerPageList[0]);
   const [state, setState] = React.useState({ open: false });
   const onStateChange = ({ open }) => setState({ open });
   const { open } = state;
 
-  const { productImages } = React.useContext(AppContext);
-
-  const from = page * itemsPerPage;
-  const to = Math.min((page + 1) * itemsPerPage, productImages.length);
+  const { productImages, setProductsImages } = React.useContext(AppContext);
 
   const [visible, setVisible] = React.useState(false);
 
@@ -32,32 +26,30 @@ const Home = () => {
     padding: 20
   };
 
-  React.useEffect(() => {
-    setPage(0);
-  }, [itemsPerPage]);
+  const extractItemsFromDecodedText = (
+    decodedText: MlkitOcrResult
+  ): { fullText: string; itemName: string; price: number } => {
+    console.log("HERE------------------------", decodedText);
+    if (!decodedText) {
+      return null;
+    }
 
-  const extractItemsFromDecodedText = (decodedText: MlkitOcrResult) => {
-    const priceRegex = /^[^\s][0-9]+[\,|\.][0-9]+/gm;
+    const priceRegex = /^[^\s][0-9]+[,|.][0-9]+/gm;
 
-    const convertedText: { itemName: string; price: string }[] = [];
+    let convertedText: { fullText: string; itemName: string; price: number } = null;
 
     decodedText.forEach((item) => {
-      console.log("decodedText", item.text);
-
       if (item.text.match(priceRegex)) {
-        convertedText.push({
+        convertedText = {
+          fullText: decodedText.map((item) => item.text).join("|||"),
           itemName: decodedText[0].text,
-          price: item.text.replaceAll(/[^0-9,.]/g, "")
-        });
+          price: parseFloat(item.text.replaceAll(/[^0-9,.]/g, "").replaceAll(",", "."))
+        };
       }
     });
 
-    console.log("HERE------------------------", convertedText);
-
     return convertedText;
   };
-
-  const { setProductsImages } = React.useContext(AppContext);
 
   const processResultImg = async (imgUri) => {
     await parseTextFromImage(imgUri);
@@ -103,8 +95,10 @@ const Home = () => {
   const parseTextFromImage = async (imageUri) => {
     try {
       const resultsOcr = await MlkitOcr.detectFromUri(imageUri);
+      console.log("-----------resultsOcr", resultsOcr);
+      const decodedText = extractItemsFromDecodedText(resultsOcr);
 
-      setProductsImages((prevState) => [...prevState, { path: imageUri, decodedText: resultsOcr }]);
+      setProductsImages((prevState) => [...prevState, { path: imageUri, decodedText }]);
     } catch (err) {
       console.error(err);
     }
@@ -129,37 +123,49 @@ const Home = () => {
           )}
         </Modal>
       </Portal>
+      <View
+        style={{
+          backgroundColor: "#4169E1",
+          height: 50,
+          alignContent: "center",
+          justifyContent: "center"
+        }}>
+        <Text
+          style={{
+            textAlign: "center"
+          }}>
+          Suma:{" "}
+          {productImages.map((item) => item.decodedText.price).reduce((acc, cost) => acc + cost, 0)}{" "}
+          zł
+        </Text>
+      </View>
       <DataTable style={{ backgroundColor: "#000000" }}>
         <DataTable.Header>
-          <DataTable.Title>#</DataTable.Title>
           <DataTable.Title>Nazwa</DataTable.Title>
-          <DataTable.Title>Cena</DataTable.Title>
-          <DataTable.Title>Akcje</DataTable.Title>
+          <DataTable.Title numeric>Ilość</DataTable.Title>
+          <DataTable.Title numeric>Cena</DataTable.Title>
+          <DataTable.Title numeric>Akcje</DataTable.Title>
         </DataTable.Header>
 
-        {productImages.slice(from, to).map((item, index) => (
-          <DataTable.Row key={item.path} style={{ height: 100 }}>
-            <DataTable.Cell>{index}</DataTable.Cell>
+        {productImages.map((item, index) => (
+          <DataTable.Row key={item.path} style={{ height: 80 }}>
             <DataTable.Cell>
-              <Text>
-                {extractItemsFromDecodedText(item.decodedText).map((product) => (
-                  <Text key={product.itemName} style={{ color: "#ffffff" }}>
-                    {product.itemName}
-                  </Text>
-                ))}
+              <Text key={item.decodedText.fullText} style={{ color: "#ffffff" }}>
+                {item.decodedText.itemName}
               </Text>
             </DataTable.Cell>
 
-            <DataTable.Cell>
-              <Text>
-                {extractItemsFromDecodedText(item.decodedText).map((product) => (
-                  <Text key={product.price} style={{ color: "#ffffff" }}>
-                    {product.price}
-                  </Text>
-                ))}
+            <DataTable.Cell numeric>
+              <Text key={item.decodedText.fullText} style={{ color: "#ffffff" }}>
+                1
               </Text>
             </DataTable.Cell>
-            <DataTable.Cell>
+            <DataTable.Cell numeric>
+              <Text key={item.decodedText.fullText} style={{ color: "#ffffff" }}>
+                {item.decodedText.price}
+              </Text>
+            </DataTable.Cell>
+            <DataTable.Cell numeric>
               <IconButton
                 icon="eye"
                 iconColor={MD3Colors.neutral90}
@@ -171,20 +177,6 @@ const Home = () => {
             </DataTable.Cell>
           </DataTable.Row>
         ))}
-
-        {productImages.length > 2 && (
-          <DataTable.Pagination
-            page={page}
-            numberOfPages={Math.ceil(productImages.length / itemsPerPage)}
-            onPageChange={(page) => setPage(page)}
-            label={`${from + 1}-${to} of ${productImages.length}`}
-            numberOfItemsPerPageList={numberOfItemsPerPageList}
-            numberOfItemsPerPage={itemsPerPage}
-            onItemsPerPageChange={onItemsPerPageChange}
-            showFastPaginationControls
-            selectPageDropdownLabel="Rows per page"
-          />
-        )}
       </DataTable>
 
       <Portal>

@@ -2,7 +2,10 @@ import { createContext, useState } from "react";
 import { MlkitOcrResult } from "react-native-mlkit-ocr";
 
 export const AppContext = createContext<{
-  productImages: { path: string; decodedText: MlkitOcrResult }[];
+  productImages: {
+    path: string;
+    decodedText: { fullText: string; itemName: string; price: number };
+  }[];
   setProductsImages: Function;
   receiptImage: { path: string; decodedText: MlkitOcrResult };
   setReceiptImage: Function;
@@ -18,9 +21,8 @@ export const ContextProvider = (props) => {
         productImages,
         setProductsImages,
         receiptImage,
-        setReceiptImage,
-      }}
-    >
+        setReceiptImage
+      }}>
       {props.children}
     </AppContext.Provider>
   );
