@@ -1,10 +1,10 @@
-import { AppContext } from "app/appContext";
+import { AppContext } from "app/context/appContext";
 import { getProductsFromReceipt, normalizePrice } from "app/helpers";
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { Text, View } from "react-native";
 
 const Summary = () => {
-  const { productImages, receiptImage } = useContext(AppContext);
+  const { products, receiptImage } = useContext(AppContext);
 
   const receiptProducts = receiptImage && getProductsFromReceipt(receiptImage.decodedText);
   const receiptPiecesSum = receiptImage
@@ -36,7 +36,13 @@ const Summary = () => {
           textAlign: "center"
         }}>
         Suma produktów:{" "}
-        {productImages.map((item) => item.decodedText.price).reduce((acc, cost) => acc + cost, 0)}{" "}
+        {products
+          .map((item) => item.answer.price)
+          .reduce((acc, cost) => {
+            console.log("cost", cost);
+            const fixedPrice = cost?.replace(",", ".");
+            return acc + Number(fixedPrice);
+          }, 0)}{" "}
         zł
       </Text>
 

@@ -5,13 +5,13 @@ import {
   setStatusBarStyle,
   setStatusBarTranslucent
 } from "expo-status-bar";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { PaperProvider, ActivityIndicator, MD2Colors, Text, Appbar } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Footer from "./Footer";
-import { ContextProvider } from "./appContext";
+import Footer from "./components/Footer";
+import { ContextProvider } from "./context/appContext";
 
 SplashScreen.preventAutoHideAsync();
 

@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import React from "react";
 import { StyleSheet, View, Dimensions, Platform } from "react-native";
 import { IconButton, MD3Colors } from "react-native-paper";
 

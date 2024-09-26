@@ -4,9 +4,9 @@ import { ScrollView } from "react-native";
 import MlkitOcr from "react-native-mlkit-ocr";
 import { DataTable, FAB, Portal, Text } from "react-native-paper";
 
-import { AppContext } from "./appContext";
-import Summary from "./components/Summary";
-import { getProductsFromReceipt, normalizePrice } from "./helpers";
+import Summary from "./Summary";
+import { AppContext } from "../context/appContext";
+import { getProductsFromReceipt, normalizePrice } from "../helpers";
 
 const Receipt = () => {
   const { receiptImage, setReceiptImage } = React.useContext(AppContext);
