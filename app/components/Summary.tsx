@@ -1,27 +1,11 @@
 import { AppContext } from "app/context/appContext";
-import { getProductsFromReceipt, normalizePrice } from "app/helpers";
 import React, { useContext } from "react";
 import { Text, View } from "react-native";
 
 const Summary = () => {
-  const { products, receiptImage } = useContext(AppContext);
+  const { products, receipt } = useContext(AppContext);
 
-  const receiptProducts = receiptImage && getProductsFromReceipt(receiptImage.decodedText);
-  const receiptPiecesSum = receiptImage
-    ? receiptProducts.pieces
-        .map((product) =>
-          parseFloat((normalizePrice(product.price) * normalizePrice(product.quantity)).toFixed(2))
-        )
-        .reduce((acc, currentValue) => acc + currentValue, 0)
-    : 0;
-
-  const receiptWeightsSum = receiptImage
-    ? receiptProducts.pieces
-        .map((product) =>
-          parseFloat((normalizePrice(product.price) * normalizePrice(product.quantity)).toFixed(2))
-        )
-        .reduce((acc, currentValue) => acc + currentValue, 0)
-    : 0;
+  console.log(receipt);
 
   return (
     <View
@@ -35,14 +19,11 @@ const Summary = () => {
         style={{
           textAlign: "center"
         }}>
-        Suma produktów:{" "}
+        Suma produktów:
         {products
-          .map((item) => item.answer.price)
-          .reduce((acc, cost) => {
-            console.log("cost", cost);
-            const fixedPrice = cost?.replace(",", ".");
-            return acc + Number(fixedPrice);
-          }, 0)}{" "}
+          .map((item) => item.product.price)
+          .reduce((acc, cost) => acc + Number(cost), 0) // TODO: fix this number conversion NaN
+          .toFixed(2)}
         zł
       </Text>
 
@@ -50,7 +31,12 @@ const Summary = () => {
         style={{
           textAlign: "center"
         }}>
-        Suma paragonu: {receiptPiecesSum + receiptWeightsSum} zł
+        Suma paragonu:
+        {receipt?.products
+          .map((item) => item.price)
+          .reduce((acc, cost) => acc + Number(cost), 0)
+          .toFixed(2) || 0}
+        zł
       </Text>
     </View>
   );

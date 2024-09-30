@@ -6,15 +6,13 @@
     "orientation": "portrait",
     "scheme": "myapp",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ashylen.snapprice"
@@ -31,10 +29,7 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": [
-      "expo-font",
-      "expo-router"
-    ],
+    "plugins": ["expo-font", "expo-router"],
     "extra": {
       "router": {
         "origin": false

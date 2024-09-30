@@ -1,3 +1,5 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ContextProvider } from "app/context/appContext";
 import { useFonts } from "expo-font";
 import { SplashScreen, Slot, usePathname } from "expo-router";
 import {
@@ -11,9 +13,10 @@ import { PaperProvider, ActivityIndicator, MD2Colors, Text, Appbar } from "react
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Footer from "./components/Footer";
-import { ContextProvider } from "./context/appContext";
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 const Layout = () => {
   setStatusBarBackgroundColor("#36302c", false);
@@ -53,20 +56,22 @@ const Layout = () => {
     );
   }
 
-  console.log(pathname);
+  console.log("pathname:", pathname);
   return (
-    <ContextProvider>
-      <PaperProvider>
-        <SafeAreaView>
-          <Appbar.Header>
-            {/* <Appbar.BackAction onPress={() => {}} /> */}
-            <Appbar.Content title={pathname === "/" ? "Lista zakupów" : "Paragon"} />
-          </Appbar.Header>
-          <Slot />
-          <Footer />
-        </SafeAreaView>
-      </PaperProvider>
-    </ContextProvider>
+    <PaperProvider>
+      <QueryClientProvider client={queryClient}>
+        <ContextProvider>
+          <SafeAreaView>
+            <Appbar.Header>
+              {/* <Appbar.BackAction onPress={() => {}} /> */}
+              <Appbar.Content title={pathname === "/" ? "Lista zakupów" : "Paragon"} />
+            </Appbar.Header>
+            <Slot />
+            <Footer />
+          </SafeAreaView>
+        </ContextProvider>
+      </QueryClientProvider>
+    </PaperProvider>
   );
 };
 

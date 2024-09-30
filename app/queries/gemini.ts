@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { MB } from "app/constants";
-import { AIAnswerFormat, Product } from "app/context/appContext";
+import { Product, ProductFormat, Receipt } from "app/context/appContext";
+import { normalizePrice } from "app/helpers";
 import * as Crypto from "expo-crypto";
 import * as ImagePicker from "expo-image-picker";
 
@@ -25,7 +26,7 @@ const runGemini = async (
   }
 };
 
-export const fetchGeminiAnswer = async ({
+export const fetchGeminiProduct = async ({
   setProducts,
   result
 }: {
@@ -35,8 +36,6 @@ export const fetchGeminiAnswer = async ({
   if (!result.canceled) {
     // @ts-expect-error ImagePickerResult returns `filesize` instead of `fileSize` - wrong types.
     const { base64: image, filesize, mimeType } = result.assets[0];
-
-    console.log(result.assets[0]);
 
     if (filesize >= 4 * MB) {
       throw new Error("Przesyłane zdjęcie jest za duże. Maksymalny rozmiar zdjęcia to 4MB");
@@ -58,18 +57,13 @@ export const fetchGeminiAnswer = async ({
       throw new Error(`Coś poszło nie tak, spróbuj ponownie.`);
     }
 
-    console.log("response", response.toString());
-    console.log(typeof response.toString());
-
-    console.log("t111hrow");
     if (response.toString().trim() === "null") {
-      console.log("throw");
       throw new Error(`Nie znaleziono produktu na zdjęciu, spróbuj ponownie.`);
     }
 
     // @ts-expect-error fix
     if (response?.includes("{")) {
-      const answer = JSON.parse(response as string) as AIAnswerFormat;
+      const answer = JSON.parse(response as string) as ProductFormat;
 
       if (answer?.label?.trim() === "null" || answer?.label === null) {
         // In case of Gemini returning answer in wrong format.
@@ -80,11 +74,68 @@ export const fetchGeminiAnswer = async ({
         ...prevState,
         {
           imageUri: result.assets[0].uri,
-          answer,
+          product: {
+            ...answer,
+            price: normalizePrice(answer.price)
+          },
           quantity: 1,
           key: Crypto.randomUUID()
         }
       ]);
+    }
+  }
+};
+
+export const fetchGeminiReceipt = async ({
+  setReceipt,
+  result
+}: {
+  setReceipt: React.Dispatch<React.SetStateAction<Receipt>>;
+  result: ImagePicker.ImagePickerResult;
+}): Promise<void> => {
+  if (!result.canceled) {
+    // @ts-expect-error ImagePickerResult returns `filesize` instead of `fileSize` - wrong types.
+    const { base64: image, filesize, mimeType } = result.assets[0];
+
+    if (filesize >= 4 * MB) {
+      throw new Error("Przesyłane zdjęcie jest za duże. Maksymalny rozmiar zdjęcia to 4MB");
+    }
+
+    const payload: (string | Part)[] = [
+      {
+        inlineData: { mimeType, data: image }
+      }
+    ];
+
+    const response = await runGemini(
+      "Extract all products from receipt, with price without currency and quantity from given image and return it with JSON format: Array of following object { id: '', label: '', price:'', weight: '', quantity: '' } . If no price was found, ignore previous command and return trimmed 'null' value instead of object.",
+      payload
+    );
+
+    // check if there was an error processing image
+    if (typeof response !== "string" && response?.error) {
+      throw new Error(`Coś poszło nie tak, spróbuj ponownie.`);
+    }
+
+    if (response.toString().trim() === "null") {
+      throw new Error(`Nie znaleziono produktów na zdjęciu, spróbuj ponownie.`);
+    }
+
+    // @ts-expect-error fix
+    if (response?.includes("{")) {
+      const answer = JSON.parse(response as string) as ProductFormat[];
+
+      console.log("asnwer", answer);
+      if (answer?.[0]?.label?.trim() === "null" || answer?.[0]?.label?.trim() === null) {
+        // In case of Gemini returning answer in wrong format.
+        throw new Error(`Nie znaleziono produktów na przesłanym zdjęciu, spróbuj ponownie.`);
+      }
+
+      setReceipt({
+        imageUri: result.assets[0].uri,
+        products: answer.map((product) => ({ ...product, price: normalizePrice(product.price) })),
+        key: Crypto.randomUUID()
+      });
     }
   }
 };

@@ -1,27 +1,29 @@
 import React, { createContext, useState } from "react";
-import { MlkitOcrResult } from "react-native-mlkit-ocr";
 
-export type AIAnswerFormat = { label: string; price: string };
-export type Product = { imageUri: string; answer: AIAnswerFormat; quantity: number; key: string };
+export type ProductFormat = { label: string; price: number; weight?: string; quantity: number };
+export type Product = { imageUri: string; product: ProductFormat; quantity: number; key: string };
+export type Receipt = { imageUri: string; products: ProductFormat[]; key: string };
 
 export const AppContext = createContext<{
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-  receiptImage: { path: string; decodedText: MlkitOcrResult };
-  setReceiptImage: Function;
+  receipt: Receipt;
+  setReceipt: React.Dispatch<React.SetStateAction<Receipt>>;
 }>(null);
 
 export const ContextProvider = (props) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [receiptImage, setReceiptImage] = useState(null);
+  const [receipt, setReceipt] = useState<Receipt>(null);
+
+  console.log("ddd", products);
 
   return (
     <AppContext.Provider
       value={{
         products,
         setProducts,
-        receiptImage,
-        setReceiptImage
+        receipt,
+        setReceipt
       }}>
       {props.children}
     </AppContext.Provider>
