@@ -2,7 +2,7 @@ import { AppContext } from "app/context/appContext";
 import React, { useContext } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-const Summary = () => {
+const Summary = ({ backgroundColor }: { backgroundColor: string }) => {
   const { products, receipt } = useContext(AppContext);
 
   const calculateTotal = (items) => {
@@ -19,7 +19,7 @@ const Summary = () => {
   const receiptTotal = receipt?.products ? calculateTotal(receipt.products) : "0.00";
   const productTotal = products ? calculateProductTotal(products) : "0.00";
   return (
-    <View style={styles.container}>
+    <View style={{ ...styles.container, backgroundColor }}>
       <Text style={styles.text}>Suma produktów: {productTotal} zł</Text>
       <Text style={styles.text}>Suma paragonu: {receiptTotal} zł</Text>
     </View>

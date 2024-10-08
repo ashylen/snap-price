@@ -3,12 +3,13 @@ import { openCamera, openImagePicker } from "app/utils/camera";
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { ActivityIndicator, DataTable, FAB, Portal, Text } from "react-native-paper";
+import { ActivityIndicator, DataTable, FAB, Portal, Snackbar, Text } from "react-native-paper";
 
 import CustomModal from "./components/Modal/Modal";
 import Summary from "./components/Summary";
 import { AppContext } from "./context/appContext";
 import { fetchGeminiReceipt } from "./queries/gemini";
+import { THEME } from "./constants";
 
 const Receipt = () => {
   const { receipt, setReceipt } = React.useContext(AppContext);
@@ -21,9 +22,9 @@ const Receipt = () => {
   const {
     mutateAsync,
     isPending,
-    isError,
     error: geminiError,
-    reset
+    reset,
+    isError
   } = useMutation({
     mutationFn: fetchGeminiReceipt
   });
@@ -36,8 +37,8 @@ const Receipt = () => {
     <>
       <CustomModal visible={visible} hideModal={hideModal} imageUri={receipt?.imageUri} />
 
-      <Summary />
-      <DataTable style={{ backgroundColor: "#fff" }}>
+      <Summary backgroundColor={THEME.receipt.backgroundColor} />
+      <DataTable>
         <DataTable.Header>
           <DataTable.Title>#</DataTable.Title>
           <DataTable.Title>Nazwa</DataTable.Title>
@@ -121,6 +122,9 @@ const Receipt = () => {
             }
           }}
         />
+        <Snackbar style={styles.snackbar} visible={isError} onDismiss={reset} duration={5000}>
+          {geminiError?.message}
+        </Snackbar>
       </Portal>
     </>
   );
@@ -134,6 +138,12 @@ const styles = StyleSheet.create({
     alignContent: "center",
     alignItems: "center",
     width: "100%"
+  },
+  snackbar: {
+    flex: 1,
+    justifyContent: "flex-end",
+    position: "absolute",
+    bottom: 50
   }
 });
 

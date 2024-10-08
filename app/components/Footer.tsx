@@ -1,4 +1,5 @@
-import { useRouter } from "expo-router";
+import { THEME } from "app/constants";
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, View, Dimensions, Platform } from "react-native";
 import { IconButton, MD3Colors } from "react-native-paper";
@@ -8,9 +9,13 @@ const WinHeight = windowDimensions.height;
 
 const Footer = () => {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const backgroundColor =
+    pathname === "/" ? THEME.shoppingList.backgroundColor : THEME.receipt.backgroundColor;
 
   return (
-    <View style={styles.footer}>
+    <View style={{ ...styles.footer, backgroundColor }}>
       <IconButton
         icon="home"
         iconColor={MD3Colors.neutral90}

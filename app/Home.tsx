@@ -4,22 +4,22 @@ import { fetchGeminiProduct } from "app/queries/gemini";
 import { openCamera, openImagePicker } from "app/utils/camera";
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
-import { Image, ListRenderItemInfo, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ListRenderItemInfo, StyleSheet, TouchableOpacity, View } from "react-native";
 import {
   ActivityIndicator,
   DataTable,
   FAB,
   IconButton,
   MD3Colors,
-  Modal,
   Portal,
   Snackbar,
   Text
 } from "react-native-paper";
 import { RowMap, SwipeListView } from "react-native-swipe-list-view";
 
-import Summary from "./components/Summary";
 import CustomModal from "./components/Modal/Modal";
+import Summary from "./components/Summary";
+import { THEME } from "./constants";
 
 const Home = () => {
   const [state, setState] = React.useState({ open: false });
@@ -104,8 +104,8 @@ const Home = () => {
   return (
     <>
       <CustomModal visible={visible} hideModal={hideModal} imageUri={modalImageUri} />
-      <Summary />
-      <DataTable style={{ backgroundColor: "#fff" }}>
+      <Summary backgroundColor={THEME.shoppingList.backgroundColor} />
+      <DataTable>
         <DataTable.Header>
           <DataTable.Title>Nazwa</DataTable.Title>
           <DataTable.Title numeric>Ilość</DataTable.Title>
@@ -210,7 +210,8 @@ const styles = StyleSheet.create({
   },
 
   fabGroup: {
-    marginBottom: 100
+    marginBottom: 100,
+    backgroundColor: THEME.shoppingList.backgroundColor
   },
   snackbar: {
     flex: 1,
