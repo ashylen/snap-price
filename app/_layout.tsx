@@ -34,7 +34,6 @@ const Layout = () => {
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
-      console.log("fonts loaded");
     }
   }, [fontsLoaded, fontError]);
 
@@ -56,7 +55,6 @@ const Layout = () => {
     );
   }
 
-  console.log("pathname:", pathname);
   return (
     <PaperProvider>
       <QueryClientProvider client={queryClient}>

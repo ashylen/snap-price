@@ -71,7 +71,7 @@ const Receipt = () => {
                 </DataTable.Cell>
 
                 <DataTable.Cell numeric>
-                  <Text key={key}>1</Text>
+                  <Text key={key}>{product.quantity}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell numeric>
                   <Text key={key}>{product.price}</Text>

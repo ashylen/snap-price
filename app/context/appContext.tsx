@@ -15,8 +15,6 @@ export const ContextProvider = (props) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [receipt, setReceipt] = useState<Receipt>(null);
 
-  console.log("ddd", products);
-
   return (
     <AppContext.Provider
       value={{

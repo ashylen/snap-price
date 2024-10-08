@@ -1,45 +1,41 @@
 import { AppContext } from "app/context/appContext";
 import React, { useContext } from "react";
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 const Summary = () => {
   const { products, receipt } = useContext(AppContext);
 
-  console.log(receipt);
+  const calculateTotal = (items) => {
+    return items.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0).toFixed(2);
+  };
 
+  const calculateProductTotal = (products) => {
+    return products
+      .map((item) => Number(item.product.price).toFixed(2))
+      .reduce((acc, cost) => acc + Number(cost), 0)
+      .toFixed(2);
+  };
+
+  const receiptTotal = receipt?.products ? calculateTotal(receipt.products) : "0.00";
+  const productTotal = products ? calculateProductTotal(products) : "0.00";
   return (
-    <View
-      style={{
-        backgroundColor: "#4169E1",
-        height: 50,
-        alignContent: "center",
-        justifyContent: "center"
-      }}>
-      <Text
-        style={{
-          textAlign: "center"
-        }}>
-        Suma produktów:
-        {products
-          .map((item) => item.product.price)
-          .reduce((acc, cost) => acc + Number(cost), 0) // TODO: fix this number conversion NaN
-          .toFixed(2)}
-        zł
-      </Text>
-
-      <Text
-        style={{
-          textAlign: "center"
-        }}>
-        Suma paragonu:
-        {receipt?.products
-          .map((item) => item.price)
-          .reduce((acc, cost) => acc + Number(cost), 0)
-          .toFixed(2) || 0}
-        zł
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.text}>Suma produktów: {productTotal} zł</Text>
+      <Text style={styles.text}>Suma paragonu: {receiptTotal} zł</Text>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#4169E1",
+    height: 60,
+    alignContent: "center",
+    justifyContent: "center"
+  },
+  text: {
+    textAlign: "center"
+  }
+});
 
 export default Summary;
