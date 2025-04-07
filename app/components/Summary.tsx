@@ -11,8 +11,7 @@ const Summary = ({ backgroundColor }: { backgroundColor: string }) => {
 
   const calculateProductTotal = (products) => {
     return products
-      .map((item) => Number(item.product.price).toFixed(2))
-      .reduce((acc, cost) => acc + Number(cost), 0)
+      .reduce((acc, item) => acc + Number(item.product.price) * item.product.quantity, 0)
       .toFixed(2);
   };
 

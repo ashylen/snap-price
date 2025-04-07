@@ -124,8 +124,11 @@ export const fetchGeminiReceipt = async ({
   setReceipt: React.Dispatch<React.SetStateAction<Receipt>>;
   result: ImagePicker.ImagePickerResult;
 }): Promise<void> => {
-  const receiptPrompt =
-    "Extract all products from receipt, with price without currency and quantity from given image and return it with JSON format: Array of following object { id: '', label: '', price:'', weight: '', quantity: '' } . If no price or label or quantity was found, ignore previous command and return trimmed 'null' value instead of object.";
+  const receiptPrompt = `Extract all products from receipt, with price without currency and quantity from given image. 
+    Return it with JSON format: Array of following object { id: '', label: '', price:'', weight: '', quantity: '' }. 
+    If no price or label or quantity was found, ignore previous command and return trimmed 'null' value instead of object.
+    Do not return any other text or explanation.
+    Do not hallucinate or make up any data.`;
   await handleImageProcessing(
     result,
     (products: ProductFormat[]) => {

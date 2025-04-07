@@ -17,12 +17,15 @@ import {
 } from "react-native-paper";
 import { RowMap, SwipeListView } from "react-native-swipe-list-view";
 
+import EditProductModal from "./components/EditProductModal/EditProductModal";
 import CustomModal from "./components/Modal/Modal";
 import Summary from "./components/Summary";
 import { THEME } from "./constants";
 
 const Home = () => {
   const [state, setState] = React.useState({ open: false });
+  const [modalProduct, setModalProduct] = React.useState<Product>(null);
+
   const [modalImageUri, setModalImageUri] = React.useState("");
   const { products, setProducts } = React.useContext(AppContext);
   const {
@@ -73,7 +76,9 @@ const Home = () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.backRightBtn, styles.backRightBtnLeft]}
-        onPress={() => closeRow(rowMap, data.item.key)}>
+        onPress={() => {
+          setModalProduct(data.item);
+        }}>
         <Text style={styles.backTextWhite}>Edytuj</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -103,6 +108,7 @@ const Home = () => {
 
   return (
     <>
+      <EditProductModal modalProduct={modalProduct} setModalProduct={setModalProduct} />
       <CustomModal visible={visible} hideModal={hideModal} imageUri={modalImageUri} />
       <Summary backgroundColor={THEME.shoppingList.backgroundColor} />
       <DataTable>
@@ -124,7 +130,7 @@ const Home = () => {
               </DataTable.Cell>
 
               <DataTable.Cell numeric>
-                <Text key={data.item.imageUri}>1</Text>
+                <Text key={data.item.imageUri}>{data.item.product.quantity}</Text>
               </DataTable.Cell>
               <DataTable.Cell numeric>
                 <Text key={data.item.imageUri}>{data.item.product.price}</Text>

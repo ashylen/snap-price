@@ -1,7 +1,7 @@
 import React, { createContext, useState } from "react";
 
 export type ProductFormat = { label: string; price: number; weight?: string; quantity: number };
-export type Product = { imageUri: string; product: ProductFormat; quantity: number; key: string };
+export type Product = { imageUri: string; product: ProductFormat; key: string };
 export type Receipt = { imageUri: string; products: ProductFormat[]; key: string };
 
 export const AppContext = createContext<{
