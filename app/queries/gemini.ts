@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { MB } from "app/constants";
+import { firebaseAuth } from "app/lib/firebase";
 import { Product, ProductFormat, Receipt } from "app/context/appContext";
 import { normalizePrice } from "app/helpers";
 import * as Crypto from "expo-crypto";
@@ -12,8 +13,14 @@ const ERROR_MESSAGES = {
   FILE_TOO_LARGE: "Przesyłane zdjęcie jest za duże. Maksymalny rozmiar zdjęcia to 4MB",
   PROCESSING_ERROR: "Coś poszło nie tak, spróbuj ponownie.",
   NO_PRODUCTS_FOUND: "Nie znaleziono produktów na zdjęciu, spróbuj ponownie.",
-  INVALID_FORMAT: "Nie znaleziono produktów na przesłanym zdjęciu, spróbuj ponownie."
+  INVALID_FORMAT: "Nie znaleziono produktów na przesłanym zdjęciu, spróbuj ponownie.",
+  AUTH_REQUIRED: "Sesja użytkownika wygasła. Zaloguj się ponownie.",
+  BACKEND_NOT_CONFIGURED:
+    "Brak konfiguracji serwera OCR. Ustaw EXPO_PUBLIC_API_BASE_URL i uruchom backend."
 };
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+const ENABLE_INSECURE_CLIENT_GEMINI = process.env.EXPO_PUBLIC_ENABLE_INSECURE_CLIENT_GEMINI === "true";
 
 const runGemini = async (
   prompt = "What's difference between these pictures?",
@@ -54,6 +61,100 @@ const parseResponse = (response: string): ProductFormat[] => {
   throw new Error(ERROR_MESSAGES.PROCESSING_ERROR);
 };
 
+const getAuthToken = async (): Promise<string> => {
+  const user = firebaseAuth.currentUser;
+
+  if (!user) {
+    throw new Error(ERROR_MESSAGES.AUTH_REQUIRED);
+  }
+
+  return user.getIdToken();
+};
+
+const extractProductsArray = (payload: unknown): ProductFormat[] => {
+  if (Array.isArray(payload)) {
+    return payload as ProductFormat[];
+  }
+
+  if (payload && typeof payload === "object") {
+    const value = payload as { products?: unknown; result?: unknown };
+
+    if (Array.isArray(value.products)) {
+      return value.products as ProductFormat[];
+    }
+
+    if (Array.isArray(value.result)) {
+      return value.result as ProductFormat[];
+    }
+  }
+
+  throw new Error(ERROR_MESSAGES.INVALID_FORMAT);
+};
+
+const runBackendOcr = async ({
+  prompt,
+  image,
+  mimeType
+}: {
+  prompt: string;
+  image: string;
+  mimeType: string;
+}): Promise<ProductFormat[]> => {
+  if (!API_BASE_URL) {
+    throw new Error(ERROR_MESSAGES.BACKEND_NOT_CONFIGURED);
+  }
+
+  const idToken = await getAuthToken();
+
+  const response = await fetch(`${API_BASE_URL}/ocr/extract`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`
+    },
+    body: JSON.stringify({
+      prompt,
+      image: {
+        mimeType,
+        data: image
+      }
+    })
+  });
+
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message = result?.message ?? ERROR_MESSAGES.PROCESSING_ERROR;
+    throw new Error(message);
+  }
+
+  return extractProductsArray(result);
+};
+
+const runOcr = async ({
+  prompt,
+  image,
+  mimeType,
+  payload
+}: {
+  prompt: string;
+  image: string;
+  mimeType: string;
+  payload: (string | Part)[];
+}): Promise<ProductFormat[]> => {
+  try {
+    return await runBackendOcr({ prompt, image, mimeType });
+  } catch (error) {
+    if (!ENABLE_INSECURE_CLIENT_GEMINI) {
+      throw error;
+    }
+
+    const response = await runGemini(prompt, payload);
+    checkResponseError(response);
+    return parseResponse(response as string);
+  }
+};
+
 const handleImageProcessing = async (
   result: ImagePicker.ImagePickerResult,
   callback: (data: any) => void,
@@ -74,16 +175,17 @@ const handleImageProcessing = async (
     }
   ];
 
-  const response = await runGemini(prompt, payload);
-
-  checkResponseError(response);
-
   try {
-    const answer = parseResponse(response as string);
+    const answer = await runOcr({
+      prompt,
+      image,
+      mimeType,
+      payload
+    });
     callback(answer);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(error);
-    throw new Error(ERROR_MESSAGES.PROCESSING_ERROR);
+    throw new Error((error as { message?: string })?.message ?? ERROR_MESSAGES.PROCESSING_ERROR);
   }
 };
 
@@ -121,7 +223,7 @@ export const fetchGeminiReceipt = async ({
   setReceipt,
   result
 }: {
-  setReceipt: React.Dispatch<React.SetStateAction<Receipt>>;
+  setReceipt: React.Dispatch<React.SetStateAction<Receipt | null>>;
   result: ImagePicker.ImagePickerResult;
 }): Promise<void> => {
   const receiptPrompt = `Extract all products from receipt, with price without currency and quantity from given image. 

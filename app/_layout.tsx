@@ -1,14 +1,30 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider, useAuthContext } from "app/context/authContext";
 import { ContextProvider } from "app/context/appContext";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { PaperProvider, Text } from "react-native-paper";
+import { ActivityIndicator, PaperProvider, Text } from "react-native-paper";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+const AppNavigator = () => {
+  const { authReady } = useAuthContext();
+
+  if (!authReady) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text>Logowanie...</Text>
+      </View>
+    );
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+};
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -34,9 +50,11 @@ export default function RootLayout() {
   return (
     <PaperProvider>
       <QueryClientProvider client={queryClient}>
-        <ContextProvider>
-          <Stack screenOptions={{ headerShown: false }} />
-        </ContextProvider>
+        <AuthProvider>
+          <ContextProvider>
+            <AppNavigator />
+          </ContextProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </PaperProvider>
   );
