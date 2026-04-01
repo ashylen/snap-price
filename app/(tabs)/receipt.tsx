@@ -1,30 +1,21 @@
 import { useMutation } from "@tanstack/react-query";
+import { useAppContext } from "app/context/appContext";
+import { fetchGeminiReceipt } from "app/queries/gemini";
 import { openCamera, openImagePicker } from "app/utils/camera";
+import { compareProducts } from "app/utils/compare";
 import * as ImagePicker from "expo-image-picker";
 import * as React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, DataTable, FAB, Portal, Snackbar, Text } from "react-native-paper";
 
-import CustomModal from "./components/Modal/Modal";
-import Summary from "./components/Summary";
-import { AppContext } from "./context/appContext";
-import { fetchGeminiReceipt } from "./queries/gemini";
-import { compareProducts } from "./utils/compare";
-import { THEME } from "./constants";
+import CustomModal from "../components/Modal/Modal";
+import Summary from "../components/Summary";
+import { THEME } from "../constants";
 
 const Receipt = () => {
-  const { receipt, setReceipt, products } = React.useContext(AppContext);
-
-  const mismatches =
-    products?.length && receipt?.products?.length
-      ? compareProducts(products, receipt.products)
-      : [];
-  const mismatchedLabels = new Set(mismatches.map((m) => m.label));
-  const [state, setState] = React.useState({ open: false });
-  const [visible, setVisible] = React.useState(false);
-  const onStateChange = ({ open }) => setState({ open });
-  const { open } = state;
-  const hideModal = () => setVisible(false);
+  const { receipt, setReceipt, products } = useAppContext();
+  const [fabOpen, setFabOpen] = React.useState(false);
+  const [previewVisible, setPreviewVisible] = React.useState(false);
 
   const {
     mutateAsync,
@@ -32,26 +23,44 @@ const Receipt = () => {
     error: geminiError,
     reset,
     isError
-  } = useMutation({
-    mutationFn: fetchGeminiReceipt
-  });
+  } = useMutation({ mutationFn: fetchGeminiReceipt });
 
-  const processImageResult = async (result: ImagePicker.ImagePickerResult) => {
-    await mutateAsync({ setReceipt, result });
-  };
+  const mismatches = React.useMemo(
+    () =>
+      products?.length && receipt?.products?.length
+        ? compareProducts(products, receipt.products)
+        : [],
+    [products, receipt?.products]
+  );
+
+  const mismatchedLabels = React.useMemo(
+    () => new Set(mismatches.map((m) => m.label)),
+    [mismatches]
+  );
+
+  const processImageResult = React.useCallback(
+    async (result: ImagePicker.ImagePickerResult) => {
+      await mutateAsync({ setReceipt, result });
+    },
+    [mutateAsync, setReceipt]
+  );
 
   return (
     <>
-      <CustomModal visible={visible} hideModal={hideModal} imageUri={receipt?.imageUri} />
+      <CustomModal
+        visible={previewVisible}
+        hideModal={() => setPreviewVisible(false)}
+        imageUri={receipt?.imageUri}
+      />
 
       <Summary backgroundColor={THEME.receipt.backgroundColor} />
+
       <DataTable>
         <DataTable.Header>
-          <DataTable.Title>#</DataTable.Title>
           <DataTable.Title>Nazwa</DataTable.Title>
-          <DataTable.Title>Ilość</DataTable.Title>
-          <DataTable.Title>Cena</DataTable.Title>
-          <DataTable.Title>Wartość</DataTable.Title>
+          <DataTable.Title numeric>Ilość</DataTable.Title>
+          <DataTable.Title numeric>Cena</DataTable.Title>
+          <DataTable.Title numeric>Wartość</DataTable.Title>
         </DataTable.Header>
 
         <ScrollView>
@@ -59,37 +68,37 @@ const Receipt = () => {
             <DataTable.Row key="loading-row" style={{ height: 80 }}>
               <DataTable.Cell>
                 <View style={styles.loadingCell}>
-                  <View>
-                    <ActivityIndicator />
-                  </View>
+                  <ActivityIndicator />
                 </View>
               </DataTable.Cell>
             </DataTable.Row>
           )}
 
           {receipt?.products?.map((product, index) => {
-            const key = product.label?.replace(" ", "") + index;
+            const key = (product.label?.replace(" ", "") ?? "") + index;
             const isMismatch = mismatchedLabels.has(product.label);
             const mismatch = isMismatch ? mismatches.find((m) => m.label === product.label) : null;
 
             return (
-              <DataTable.Row key={key} style={{ height: 70, backgroundColor: isMismatch ? "#ffe0e0" : "#fff" }}>
+              <DataTable.Row
+                key={key}
+                style={{ height: 70, backgroundColor: isMismatch ? "#ffe0e0" : "#fff" }}>
                 <DataTable.Cell>
-                  <Text numberOfLines={1} key={key} style={{ width: 150 }}>
+                  <Text numberOfLines={1} style={{ width: 150 }}>
                     {product.label}
                   </Text>
                 </DataTable.Cell>
-
                 <DataTable.Cell numeric>
-                  <Text key={key}>{product.quantity}</Text>
+                  <Text>{product.quantity}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell numeric>
-                  <Text key={key} style={isMismatch ? { color: "#cc0000", fontWeight: "bold" } : {}}>
-                    {product.price}{isMismatch ? ` (${mismatch.shelfPrice})` : ""}
+                  <Text style={isMismatch ? styles.mismatchPrice : undefined}>
+                    {product.price}
+                    {isMismatch ? ` (${mismatch?.shelfPrice})` : ""}
                   </Text>
                 </DataTable.Cell>
                 <DataTable.Cell numeric>
-                  <Text key={key}>{product.price * product.quantity}</Text>
+                  <Text>{product.price * product.quantity}</Text>
                 </DataTable.Cell>
               </DataTable.Row>
             );
@@ -99,10 +108,10 @@ const Receipt = () => {
 
       <Portal>
         <FAB.Group
-          open={open}
+          open={fabOpen}
           visible
           fabStyle={{ marginBottom: 100 }}
-          icon={open ? "close" : "plus"}
+          icon={fabOpen ? "close" : "plus"}
           actions={[
             {
               icon: "camera",
@@ -118,20 +127,13 @@ const Receipt = () => {
               icon: "eye",
               label: "Podejrzyj paragon",
               onPress: () => {
-                if (receipt?.imageUri) {
-                  setVisible(true);
-                }
+                if (receipt?.imageUri) setPreviewVisible(true);
               },
-              containerStyle: !receipt?.imageUri && open ? { opacity: 0.2 } : {},
-              style: !receipt?.imageUri && open ? { opacity: 0.2, pointerEvents: "none" } : {}
+              containerStyle: !receipt?.imageUri && fabOpen ? { opacity: 0.2 } : {},
+              style: !receipt?.imageUri && fabOpen ? { opacity: 0.2, pointerEvents: "none" } : {}
             }
           ]}
-          onStateChange={onStateChange}
-          onPress={() => {
-            if (open) {
-              // do something if the speed dial is open
-            }
-          }}
+          onStateChange={({ open }) => setFabOpen(open)}
         />
         <Snackbar style={styles.snackbar} visible={isError} onDismiss={reset} duration={5000}>
           {geminiError?.message}
@@ -143,19 +145,13 @@ const Receipt = () => {
 
 const styles = StyleSheet.create({
   loadingCell: {
-    display: "flex",
     flexDirection: "row",
     justifyContent: "center",
-    alignContent: "center",
     alignItems: "center",
     width: "100%"
   },
-  snackbar: {
-    flex: 1,
-    justifyContent: "flex-end",
-    position: "absolute",
-    bottom: 50
-  }
+  mismatchPrice: { color: "#cc0000", fontWeight: "bold" },
+  snackbar: { position: "absolute", bottom: 50, flex: 1, justifyContent: "flex-end" }
 });
 
 export default Receipt;

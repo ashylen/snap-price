@@ -1,29 +1,41 @@
-import { AppContext } from "app/context/appContext";
+import { useAppContext } from "app/context/appContext";
 import { compareProducts } from "app/utils/compare";
-import React, { useContext } from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 const Summary = ({ backgroundColor }: { backgroundColor: string }) => {
-  const { products, receipt } = useContext(AppContext);
+  const { products, receipt } = useAppContext();
 
-  const calculateTotal = (items) => {
-    return items.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0).toFixed(2);
-  };
+  const productTotal = useMemo(
+    () =>
+      products
+        .reduce((acc, item) => acc + Number(item.product.price) * item.product.quantity, 0)
+        .toFixed(2),
+    [products]
+  );
 
-  const calculateProductTotal = (products) => {
-    return products
-      .reduce((acc, item) => acc + Number(item.product.price) * item.product.quantity, 0)
-      .toFixed(2);
-  };
+  const receiptTotal = useMemo(
+    () =>
+      receipt?.products
+        ? receipt.products
+            .reduce((acc, item) => acc + Number(item.price) * item.quantity, 0)
+            .toFixed(2)
+        : "0.00",
+    [receipt?.products]
+  );
 
-  const receiptTotal = receipt?.products ? calculateTotal(receipt.products) : "0.00";
-  const productTotal = products ? calculateProductTotal(products) : "0.00";
+  const mismatches = useMemo(
+    () =>
+      products?.length && receipt?.products?.length
+        ? compareProducts(products, receipt.products)
+        : [],
+    [products, receipt?.products]
+  );
 
-  const mismatches =
-    products?.length && receipt?.products?.length
-      ? compareProducts(products, receipt.products)
-      : [];
-  const totalOvercharge = mismatches.reduce((acc, m) => acc + m.overcharge, 0);
+  const totalOvercharge = useMemo(
+    () => mismatches.reduce((acc, m) => acc + m.overcharge, 0),
+    [mismatches]
+  );
 
   return (
     <View

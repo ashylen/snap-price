@@ -1,44 +1,34 @@
 import { AppContext, Product } from "app/context/appContext";
-import React, { useContext, useState } from "react";
-import { Button, TextInput, StyleSheet } from "react-native";
-import { Modal, Portal, Text } from "react-native-paper";
+import React, { useContext, useEffect, useState } from "react";
+import { StyleSheet, TextInput } from "react-native";
+import { Button, Modal, Portal, Text } from "react-native-paper";
 
 interface EditProductModalProps {
-  modalProduct: Product;
-  setModalProduct: (product: Product) => void;
+  modalProduct: Product | null;
+  setModalProduct: (product: Product | null) => void;
 }
 
 const EditProductModal = ({ modalProduct, setModalProduct }: EditProductModalProps) => {
-  const [formData, setFormData] = useState({
-    quantity: modalProduct?.product?.quantity || "1"
-  });
+  const [quantity, setQuantity] = useState(modalProduct?.product?.quantity?.toString() ?? "1");
+
+  useEffect(() => {
+    setQuantity(modalProduct?.product?.quantity?.toString() ?? "1");
+  }, [modalProduct]);
 
   const { setProducts } = useContext(AppContext);
 
-  const handleCloseModal = () => {
-    setModalProduct(null);
-  };
-
-  const handleInputChange = (label: string, value: string) => {
-    setFormData({ ...formData, [label]: value });
-  };
+  const handleCloseModal = () => setModalProduct(null);
 
   const handleSubmit = () => {
-    setProducts((prevProducts) => {
-      return prevProducts.map((product) => {
-        if (product.key === modalProduct.key) {
-          return {
-            ...product,
-            product: {
-              ...product.product,
-              quantity: parseInt(formData.quantity.toString(), 10)
-            }
-          };
-        }
-        return product;
-      });
-    });
-
+    setProducts((prevProducts) =>
+      prevProducts.map((product) => {
+        if (product.key !== modalProduct?.key) return product;
+        return {
+          ...product,
+          product: { ...product.product, quantity: parseInt(quantity, 10) || 1 }
+        };
+      })
+    );
     handleCloseModal();
   };
 
@@ -51,22 +41,21 @@ const EditProductModal = ({ modalProduct, setModalProduct }: EditProductModalPro
         <Text style={styles.modalTitle}>{modalProduct?.product?.label}</Text>
         <TextInput
           style={styles.input}
-          placeholder="quantity"
-          value={formData.quantity?.toString()}
-          onChangeText={(text) => handleInputChange("quantity", text)}
+          placeholder="Ilość"
+          value={quantity}
+          keyboardType="numeric"
+          onChangeText={setQuantity}
         />
-        <Button title="Submit" onPress={handleSubmit} />
+        <Button mode="contained" onPress={handleSubmit}>
+          Zapisz
+        </Button>
       </Modal>
     </Portal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
-  },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContainer: {
     position: "absolute",
     top: 0,
@@ -78,10 +67,7 @@ const styles = StyleSheet.create({
     margin: 20,
     borderRadius: 10
   },
-  modalTitle: {
-    fontSize: 20,
-    marginBottom: 20
-  },
+  modalTitle: { fontSize: 20, marginBottom: 20 },
   input: {
     height: 40,
     borderColor: "gray",

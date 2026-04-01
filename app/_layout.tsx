@@ -1,30 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ContextProvider } from "app/context/appContext";
 import { useFonts } from "expo-font";
-import { SplashScreen, Slot, usePathname } from "expo-router";
-import {
-  setStatusBarBackgroundColor,
-  setStatusBarStyle,
-  setStatusBarTranslucent
-} from "expo-status-bar";
+import { SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { PaperProvider, ActivityIndicator, MD2Colors, Text, Appbar } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import Footer from "./components/Footer";
+import { PaperProvider, Text } from "react-native-paper";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-const Layout = () => {
-  setStatusBarBackgroundColor("#36302c", false);
-  setStatusBarStyle("light");
-  setStatusBarTranslucent(false);
-
-  const pathname = usePathname();
-
+export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     "Hochstadt-Serif": require("../assets/fonts/Hochstadt-Serif.otf"),
     "TheGreatOutdoors-Regular": require("../assets/fonts/TheGreatOutdoors-Regular.otf"),
@@ -32,25 +18,15 @@ const Layout = () => {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) {
-    return (
-      <View style={styles.fixedContainer}>
-        <Text>
-          <ActivityIndicator animating color={MD2Colors.red800} size="large" />
-        </Text>
-      </View>
-    );
-  }
+  if (!fontsLoaded && !fontError) return null;
 
   if (fontError) {
     return (
-      <View>
-        <Text>Error occured: {fontError.message}</Text>
+      <View style={styles.center}>
+        <Text>Error loading fonts: {fontError.message}</Text>
       </View>
     );
   }
@@ -59,28 +35,13 @@ const Layout = () => {
     <PaperProvider>
       <QueryClientProvider client={queryClient}>
         <ContextProvider>
-          <SafeAreaView>
-            <Appbar.Header>
-              {/* <Appbar.BackAction onPress={() => {}} /> */}
-              <Appbar.Content title={pathname === "/" ? "Lista zakupów" : "Paragon"} />
-            </Appbar.Header>
-            <Slot />
-            <Footer />
-          </SafeAreaView>
+          <Stack screenOptions={{ headerShown: false }} />
         </ContextProvider>
       </QueryClientProvider>
     </PaperProvider>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  fixedContainer: {
-    height: "100%",
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  }
+  center: { flex: 1, justifyContent: "center", alignItems: "center" }
 });
-
-export default Layout;

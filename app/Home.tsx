@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { AppContext, Product } from "app/context/appContext";
+import { Product, useAppContext } from "app/context/appContext";
 import { fetchGeminiProduct } from "app/queries/gemini";
 import { openCamera, openImagePicker } from "app/utils/camera";
 import * as ImagePicker from "expo-image-picker";
@@ -27,16 +27,14 @@ const Home = () => {
   const [modalProduct, setModalProduct] = React.useState<Product>(null);
 
   const [modalImageUri, setModalImageUri] = React.useState("");
-  const { products, setProducts } = React.useContext(AppContext);
+  const { products, setProducts } = useAppContext();
   const {
     mutateAsync,
     isPending,
     isError,
     error: geminiError,
     reset
-  } = useMutation({
-    mutationFn: fetchGeminiProduct
-  });
+  } = useMutation({ mutationFn: fetchGeminiProduct });
 
   const [visible, setVisible] = React.useState(false);
   const onStateChange = ({ open }) => setState({ open });
@@ -89,9 +87,12 @@ const Home = () => {
     </View>
   );
 
-  const processImage = async (result: ImagePicker.ImagePickerResult) => {
-    await mutateAsync({ setProducts, result });
-  };
+  const processImage = React.useCallback(
+    async (result: ImagePicker.ImagePickerResult) => {
+      await mutateAsync({ setProducts, result });
+    },
+    [mutateAsync, setProducts]
+  );
 
   const floatingBtnActions = [
     {
@@ -175,13 +176,8 @@ const Home = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "white",
-    flex: 1
-  },
-  backTextWhite: {
-    color: "#FFF"
-  },
+  container: { backgroundColor: "white", flex: 1 },
+  backTextWhite: { color: "#FFF" },
   rowFront: {
     alignItems: "center",
     backgroundColor: "#CCC",
@@ -206,25 +202,11 @@ const styles = StyleSheet.create({
     top: 0,
     width: 75
   },
-  backRightBtnLeft: {
-    backgroundColor: "blue",
-    right: 75
-  },
-  backRightBtnRight: {
-    backgroundColor: "red",
-    right: 0
-  },
+  backRightBtnLeft: { backgroundColor: "blue", right: 75 },
+  backRightBtnRight: { backgroundColor: "red", right: 0 },
 
-  fabGroup: {
-    marginBottom: 100,
-    backgroundColor: THEME.shoppingList.backgroundColor
-  },
-  snackbar: {
-    flex: 1,
-    justifyContent: "flex-end",
-    position: "absolute",
-    bottom: 50
-  },
+  fabGroup: { marginBottom: 100, backgroundColor: THEME.shoppingList.backgroundColor },
+  snackbar: { flex: 1, justifyContent: "flex-end", position: "absolute", bottom: 50 },
   loadingCell: {
     display: "flex",
     flexDirection: "row",
