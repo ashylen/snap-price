@@ -9,10 +9,17 @@ import CustomModal from "./components/Modal/Modal";
 import Summary from "./components/Summary";
 import { AppContext } from "./context/appContext";
 import { fetchGeminiReceipt } from "./queries/gemini";
+import { compareProducts } from "./utils/compare";
 import { THEME } from "./constants";
 
 const Receipt = () => {
-  const { receipt, setReceipt } = React.useContext(AppContext);
+  const { receipt, setReceipt, products } = React.useContext(AppContext);
+
+  const mismatches =
+    products?.length && receipt?.products?.length
+      ? compareProducts(products, receipt.products)
+      : [];
+  const mismatchedLabels = new Set(mismatches.map((m) => m.label));
   const [state, setState] = React.useState({ open: false });
   const [visible, setVisible] = React.useState(false);
   const onStateChange = ({ open }) => setState({ open });
@@ -62,9 +69,11 @@ const Receipt = () => {
 
           {receipt?.products?.map((product, index) => {
             const key = product.label?.replace(" ", "") + index;
+            const isMismatch = mismatchedLabels.has(product.label);
+            const mismatch = isMismatch ? mismatches.find((m) => m.label === product.label) : null;
 
             return (
-              <DataTable.Row key={key} style={{ height: 70, backgroundColor: "#fff" }}>
+              <DataTable.Row key={key} style={{ height: 70, backgroundColor: isMismatch ? "#ffe0e0" : "#fff" }}>
                 <DataTable.Cell>
                   <Text numberOfLines={1} key={key} style={{ width: 150 }}>
                     {product.label}
@@ -75,7 +84,9 @@ const Receipt = () => {
                   <Text key={key}>{product.quantity}</Text>
                 </DataTable.Cell>
                 <DataTable.Cell numeric>
-                  <Text key={key}>{product.price}</Text>
+                  <Text key={key} style={isMismatch ? { color: "#cc0000", fontWeight: "bold" } : {}}>
+                    {product.price}{isMismatch ? ` (${mismatch.shelfPrice})` : ""}
+                  </Text>
                 </DataTable.Cell>
                 <DataTable.Cell numeric>
                   <Text key={key}>{product.price * product.quantity}</Text>

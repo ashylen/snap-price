@@ -36,7 +36,7 @@ export const openImagePicker = async (
   processImage: (result: ImagePicker.ImagePickerResult) => void
 ) => {
   const hasPermission = await requestPermission(
-    ImagePicker.requestCameraPermissionsAsync,
+    ImagePicker.requestMediaLibraryPermissionsAsync,
     "Brak dostępu do galerii zdjęć. Nadaj dostęp do galerii zdjęć dla tej aplikacji w ustawieniach telefonu."
   );
 

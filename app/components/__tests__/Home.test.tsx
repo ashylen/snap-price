@@ -28,14 +28,12 @@ const mockProducts = [
   {
     key: "1",
     imageUri: "https://example.com/image1.jpg",
-    answer: { label: "Product 1", price: "10" },
-    quantity: 1
+    product: { label: "Product 1", price: 10, quantity: 1 }
   },
   {
     key: "2",
     imageUri: "https://example.com/image2.jpg",
-    answer: { label: "Product 2", price: "20" },
-    quantity: 1
+    product: { label: "Product 2", price: 20, quantity: 1 }
   }
 ];
 
@@ -54,7 +52,7 @@ describe("Home Component", () => {
 
   it("renders correctly", () => {
     const { getByText } = render(
-      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts }}>
+      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts, receipt: null, setReceipt: jest.fn() }}>
         <Home />
       </AppContext.Provider>
     );
@@ -65,7 +63,7 @@ describe("Home Component", () => {
 
   it("shows modal when showModal is called", async () => {
     const { getByText, queryByText } = render(
-      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts }}>
+      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts, receipt: null, setReceipt: jest.fn() }}>
         <Home />
       </AppContext.Provider>
     );
@@ -80,7 +78,7 @@ describe("Home Component", () => {
 
   it("hides modal when hideModal is called", async () => {
     const { getByText, queryByText } = render(
-      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts }}>
+      <AppContext.Provider value={{ products: mockProducts, setProducts: mockSetProducts, receipt: null, setReceipt: jest.fn() }}>
         <Home />
       </AppContext.Provider>
     );
